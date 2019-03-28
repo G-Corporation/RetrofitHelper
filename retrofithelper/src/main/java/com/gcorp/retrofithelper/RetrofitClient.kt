@@ -93,8 +93,7 @@ class RetrofitClient {
 
     fun removeHeader(headers: HashMap<String, String>): RetrofitClient {
         headers.forEach {
-            if (this.headers[it.key] != null){
-                Log.e("myApp","remove ${it.key} -> ${it.value}")
+            if (this.headers[it.key] != null) {
                 this.headers.remove(it.key)
             }
         }
@@ -201,7 +200,7 @@ class RetrofitClient {
             ) as Observable<retrofit2.Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -212,6 +211,7 @@ class RetrofitClient {
 
     inner class Post<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
         override fun run() {
+
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
 
             requestHandler!!.onBeforeSend()
@@ -223,7 +223,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -231,7 +231,7 @@ class RetrofitClient {
                 })
         }
     }
-    
+
     inner class Put<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
         override fun run() {
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
@@ -245,7 +245,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -267,7 +267,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -288,7 +288,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -310,7 +310,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -332,7 +332,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(requestHandler){
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -344,8 +344,14 @@ class RetrofitClient {
     abstract inner class BaseRequest<myResponse> {
         var requestHeader: HashMap<String, String> = HashMap()
         var baseUrlKey: String? = null
+            get() {
+                if (field != null)
+                    return field
+                return BASE_URL
+            }
         var path: String? = null
         var urlParams: HashMap<String, String> = HashMap()
+        var classOfT: Class<myResponse>? = null
         var requestHandler: RequestHandler<myResponse>? = null
 
         open fun setRequestHeader(key: String, value: String): BaseRequest<myResponse> {
@@ -388,7 +394,11 @@ class RetrofitClient {
             return this
         }
 
-        open fun setRequestHandler(requestHandler: RequestHandler<myResponse>): BaseRequest<myResponse> {
+        open fun setRequestHandler(
+            classOfT: Class<myResponse>,
+            requestHandler: RequestHandler<myResponse>
+        ): BaseRequest<myResponse> {
+            this.classOfT = classOfT
             this.requestHandler = requestHandler
             return this
         }
@@ -445,8 +455,11 @@ class RetrofitClient {
             return this
         }
 
-        override fun setRequestHandler(requestHandler: RequestHandler<myResponse>): PostBaseRequest<myRequest, myResponse> {
-            super.setRequestHandler(requestHandler)
+        override fun setRequestHandler(
+            classOfT: Class<myResponse>,
+            requestHandler: RequestHandler<myResponse>
+        ): PostBaseRequest<myRequest, myResponse> {
+            super.setRequestHandler(classOfT, requestHandler)
             return this
         }
     }
@@ -457,6 +470,7 @@ class RetrofitClient {
         var path: String? = null
         var urlParams: HashMap<String, String> = HashMap()
         var part: MultipartBody.Part? = null
+        var classOfT: Class<myResponse>? = null
         var requestHandler: RequestHandler<myResponse>? = null
         open fun setRequestHeader(key: String, value: String): MultiPartBaseRequest<myResponse> {
             this.requestHeader[key] = value
@@ -511,7 +525,8 @@ class RetrofitClient {
             return setPart(FileUtils.bitmapToPart(activity, bitmap, name))
         }
 
-        open fun setRequestHandler(requestHandler: RequestHandler<myResponse>): MultiPartBaseRequest<myResponse> {
+        open fun setRequestHandler(classOfT: Class<myResponse>,requestHandler: RequestHandler<myResponse>): MultiPartBaseRequest<myResponse> {
+            this.classOfT = classOfT
             this.requestHandler = requestHandler
             return this
         }
@@ -520,14 +535,14 @@ class RetrofitClient {
         }
     }
 
-    open class MySubscriber<T>(private val requestHandler: RequestHandler<T>?):Subscriber<Response<T>>(){
+    open class MySubscriber<T>(private val classOfT: Class<T>, private val requestHandler: RequestHandler<T>?) :
+        Subscriber<Response<T>>() {
         override fun onNext(t: Response<T>?) {
             if (t != null) {
-                Log.e("myApp", "12")
-                Log.e("myApp", "code -> ${t.code()}")
-                Log.e("myApp", "body -> ${t.body()}")
-                Log.e("myApp", "header -> ${t.headers()}")
-
+                Log.e("Request", "code -> ${t.code()}")
+                Log.e("Request", "raw -> ${t.raw()}")
+                Log.e("Request", "body -> ${t.body()}")
+                Log.e("Request", "header -> ${t.headers()}")
             }
 
             if (t == null) {
@@ -535,25 +550,24 @@ class RetrofitClient {
                 return
             }
 
-            val res = Response(t)
+            Log.e("AryLib", "raw -> " + t.raw().toString())
+            Log.e("AryLib", "raw.body -> " + t.body())
+
+            val res = Response(t, classOfT)
 
             if (t.code() != 200) {
-                Log.e("myApp", "13")
                 requestHandler?.onError(res)
                 return
             }
-            Log.e("myApp", "14")
             requestHandler?.onSuccess(res)
 
         }
 
         override fun onCompleted() {
-            Log.e("myApp", "onCompleted()")
             requestHandler?.onComplete()
         }
 
         override fun onError(e: Throwable?) {
-            Log.e("myApp", "onError()")
             requestHandler?.onFailed(e)
             e?.printStackTrace()
         }

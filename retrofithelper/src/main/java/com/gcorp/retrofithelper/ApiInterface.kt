@@ -8,7 +8,7 @@ import rx.Observable
 
 interface ApiInterface {
     @GET
-    fun get(@Url url: String, @QueryMap urlParams: Any?): Observable<Response<Any?>>
+    fun get(@Url url: String, @QueryMap urlParams: HashMap<String, String>?): Observable<Response<Any?>>
 
     @POST
     fun post(@Url url: String, @QueryMap urlParams: HashMap<String, String>?, @Body request: Any?): Observable<Response<Any?>>
