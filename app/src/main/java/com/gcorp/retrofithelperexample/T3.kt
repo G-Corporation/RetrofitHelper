@@ -1,6 +1,10 @@
 package com.gcorp.retrofithelperexample
 open  class T3 {
-    var id: String = "pashm"
-    var name: String = "pashm"
-    var isComplete: Boolean = false
+    val items: List<Item>? = null
+
+
+    inner class Item{
+        var name: String = ""
+        var url: String = ""
+    }
 }

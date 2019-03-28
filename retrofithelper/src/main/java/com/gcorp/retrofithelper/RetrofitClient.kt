@@ -3,6 +3,7 @@ package com.gcorp.retrofithelper
 import android.app.Activity
 import android.graphics.Bitmap
 import android.util.Log
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -540,18 +541,14 @@ class RetrofitClient {
         override fun onNext(t: Response<T>?) {
             if (t != null) {
                 Log.e("Request", "code -> ${t.code()}")
-                Log.e("Request", "raw -> ${t.raw()}")
-                Log.e("Request", "body -> ${t.body()}")
                 Log.e("Request", "header -> ${t.headers()}")
+                Log.e("Request", "body -> ${t.body()}")
             }
 
             if (t == null) {
                 requestHandler?.onFailed(Throwable("Response in null"))
                 return
             }
-
-            Log.e("AryLib", "raw -> " + t.raw().toString())
-            Log.e("AryLib", "raw.body -> " + t.body())
 
             val res = Response(t, classOfT)
 
