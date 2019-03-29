@@ -1,34 +1,30 @@
 package com.gcorp.retrofithelper
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.Bitmap
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.util.Log
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import okhttp3.MediaType
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
+import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
 import rx.Observable
 import rx.Subscriber
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import java.io.*
 import java.lang.NullPointerException
-import java.net.URL
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.*
 
-class RetrofitClient {
+open class RetrofitClient(private val context: Context) {
     companion object {
         private val BASE_URL = "RETROFIT_CLIENT_BASE_URL"
         private fun setMap(key: String, value: String): HashMap<String, String> {
@@ -38,13 +34,17 @@ class RetrofitClient {
         }
     }
 
-    private val urls = HashMap<String, String>()
-    private var logRequest: Boolean = true
-    private var connectionTimeout: Long = 15
-    private var readingTimeout: Long = 15
-    private var certificate: InputStream? = null
-    private var headers = HashMap<String, String>()
-    private val retrofits = HashMap<String, Retrofit>()
+    protected val urls = HashMap<String, String>()
+    protected var logRequest: Boolean = true
+    protected var connectionTimeout: Long = 15
+    protected var readingTimeout: Long = 15
+    protected var certificate: InputStream? = null
+    protected var headers = HashMap<String, String>()
+    protected val retrofits = HashMap<String, Retrofit>()
+    protected var caching: Boolean = false
+    protected var cacheStorageSpace = (5 * 1024 * 1024).toLong()
+    protected var cacheTimeLimit = 60 * 60 * 24 * 7
+    protected var myCache: Cache? = null
 
     fun setBaseUrl(baseUrl: String): RetrofitClient {
         return setUrl(BASE_URL, baseUrl)
@@ -111,6 +111,53 @@ class RetrofitClient {
         return this
     }
 
+    fun caching(caching: Boolean): RetrofitClient {
+        if (caching) {
+            this.caching = true
+            return setupCaching()
+
+        }
+        this.caching = false
+        return this
+    }
+
+    fun enableCaching(cacheStorageSpace: Int = 5, cacheTimeLimit: Int = 60 * 24 * 7): RetrofitClient {
+        //Todo:cacheStorageSpace is MG and  cacheTimeLimit is Minutes
+        return setCacheStorageSpace(cacheStorageSpace)
+            .setCacheLifeTime(cacheTimeLimit)
+            .setupCaching()
+    }
+
+    fun setCacheStorageSpace(cacheStorageSpace: Int): RetrofitClient {
+        //Todo:cacheStorageSpace is MG
+        this.cacheStorageSpace = (cacheStorageSpace * 1024 * 1024).toLong()
+        return setupCaching()
+    }
+
+    fun setCacheStorageSpace(cacheStorageSpace: Long): RetrofitClient {
+        //Todo:cacheStorageSpace is Byte
+        this.cacheStorageSpace = cacheStorageSpace
+        return setupCaching()
+    }
+
+    fun setCacheLifeTime(cacheLifeTime: Int): RetrofitClient {
+        //Todo:cacheTimeLimit is Minutes
+        this.cacheTimeLimit = cacheLifeTime * 60
+        return this
+    }
+
+    fun setCacheLifeTimeDays(cacheLifeTimeDays: Int): RetrofitClient {
+        return setCacheLifeTime(cacheLifeTimeDays * 60 * 24)
+    }
+
+    protected fun setupCaching(): RetrofitClient {
+        context?.let {
+            this.caching = true
+            myCache = Cache(it.cacheDir, cacheStorageSpace)
+        }
+        return this
+    }
+
     //Build
     fun build(): RetrofitClient {
         return build(BASE_URL)
@@ -125,12 +172,12 @@ class RetrofitClient {
             okHttpClientBuilder.addInterceptor(interceptor)
         }
 
-        if (certificate != null) {
+        certificate?.let {
             try {
                 val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
                 keyStore.load(null, null)
 
-                val bis = BufferedInputStream(certificate)
+                val bis = BufferedInputStream(it)
                 val certificateFactory = CertificateFactory.getInstance("X.509")
 
                 while (bis.available() > 0) {
@@ -151,10 +198,41 @@ class RetrofitClient {
             }
         }
 
+        myCache?.let {
+            okHttpClientBuilder.cache(it)
+        }
+
         val okHttpClient = okHttpClientBuilder.connectTimeout(connectionTimeout, TimeUnit.SECONDS) // connect timeout
             .readTimeout(readingTimeout, TimeUnit.SECONDS)
             .addInterceptor {
-                val nb = it.request().newBuilder()
+                var request = it.request()
+                request = if (!caching || hasNetworkConnection()!!) {
+                    /*
+                    *  If there is Internet, get the cache that was stored 5 seconds ago.
+                    *  If the cache is older than 5 seconds, then discard it,
+                    *  and indicate an error in fetching the response.
+                    *  The 'max-age' attribute is responsible for this behavior.
+                    */
+                    if (caching && logRequest)
+                        Log.d("OkHttp", "OnlineMode")
+                    request.newBuilder().header("Cache-Control", "public, max-age=" + 5).build()
+                } else {
+                    /*
+                    *  If there is no Internet, get the cache that was stored $cacheTimeLimit ago.
+                    *  If the cache is older than $cacheTimeLimit, then discard it,
+                    *  and indicate an error in fetching the response.
+                    *  The 'max-stale' attribute is responsible for this behavior.
+                    *  The 'only-if-cached' attribute indicates to not retrieve new data; fetch the cache only instead.
+                    */
+                    if (logRequest)
+                        Log.d("OkHttp", "OfflineMode")
+                    request.newBuilder().header(
+                        "Cache-Control",
+                        "public, only-if-cached, max-stale=$cacheTimeLimit"
+                    ).build()
+                }
+
+                val nb = request.newBuilder()
                 headers.forEach { header ->
                     nb.addHeader(header.key, header.value)
                 }
@@ -201,7 +279,7 @@ class RetrofitClient {
             ) as Observable<retrofit2.Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -224,7 +302,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -246,7 +324,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -268,7 +346,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -289,7 +367,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -311,7 +389,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -333,7 +411,7 @@ class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!,requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -526,7 +604,10 @@ class RetrofitClient {
             return setPart(FileUtils.bitmapToPart(activity, bitmap, name))
         }
 
-        open fun setRequestHandler(classOfT: Class<myResponse>,requestHandler: RequestHandler<myResponse>): MultiPartBaseRequest<myResponse> {
+        open fun setRequestHandler(
+            classOfT: Class<myResponse>,
+            requestHandler: RequestHandler<myResponse>
+        ): MultiPartBaseRequest<myResponse> {
             this.classOfT = classOfT
             this.requestHandler = requestHandler
             return this
@@ -539,12 +620,11 @@ class RetrofitClient {
     open class MySubscriber<T>(private val classOfT: Class<T>, private val requestHandler: RequestHandler<T>?) :
         Subscriber<Response<T>>() {
         override fun onNext(t: Response<T>?) {
-            if (t != null) {
-                Log.e("Request", "code -> ${t.code()}")
-                Log.e("Request", "header -> ${t.headers()}")
-                Log.e("Request", "body -> ${t.body()}")
-            }
-
+//            if (t != null) {
+//                Log.e("Request", "code -> ${t.code()}")
+//                Log.e("Request", "header -> ${t.headers()}")
+//                Log.e("Request", "body -> ${t.body()}")
+//            }
             if (t == null) {
                 requestHandler?.onFailed(Throwable("Response in null"))
                 return
@@ -570,5 +650,14 @@ class RetrofitClient {
         }
     }
 
+    //Utils
+    fun hasNetworkConnection(): Boolean? {
+        var isConnected: Boolean? = false // Initial Value
+        val connectivityManager = context!!.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+        if (activeNetwork != null && activeNetwork.isConnected)
+            isConnected = true
+        return isConnected
+    }
 }
 

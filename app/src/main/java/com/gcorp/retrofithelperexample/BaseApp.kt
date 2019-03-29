@@ -8,9 +8,10 @@ class BaseApp : Application() {
         super.onCreate()
 
         retrofitClient =
-            RetrofitClient().setBaseUrl("http://192.168.1.2/test/")
+            RetrofitClient(this).setBaseUrl("http://192.168.1.2/test/")
                 .setUrl("mili","http://7468e347.ngrok.io/api/")
                 .setConnectionTimeout(15)
+                .enableCaching()
                 .setReadingTimeout(15)
                 .addHeader("Accept", "application/json")
                 .addHeader("client", "android")
