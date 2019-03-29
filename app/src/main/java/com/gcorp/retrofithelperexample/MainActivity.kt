@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
                     Log.e("Error", ":DDD errrrror -> ${e!!.message}")
                 }
             })
-            .run()
+            .run(this)
     }
 
     inner class T {

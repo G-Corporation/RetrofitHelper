@@ -24,8 +24,9 @@ import java.security.cert.CertificateFactory
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.*
 
-open class RetrofitClient(private val context: Context) {
+open class RetrofitClient {
     companion object {
+        val instance = com.gcorp.retrofithelper.RetrofitClient()
         private val BASE_URL = "RETROFIT_CLIENT_BASE_URL"
         private fun setMap(key: String, value: String): HashMap<String, String> {
             val map = HashMap<String, String>()
@@ -49,6 +50,7 @@ open class RetrofitClient(private val context: Context) {
     fun setBaseUrl(baseUrl: String): RetrofitClient {
         return setUrl(BASE_URL, baseUrl)
     }
+
 
     fun setUrl(keyUrl: String, url: String): RetrofitClient {
         urls[keyUrl] = url
@@ -111,33 +113,30 @@ open class RetrofitClient(private val context: Context) {
         return this
     }
 
-    fun caching(caching: Boolean): RetrofitClient {
-        if (caching) {
-            this.caching = true
-            return setupCaching()
-
+    fun caching(caching: Boolean, context: Context?): RetrofitClient {
+        //Todo:context must be not null if caching is true
+        if (caching && context != null) {
+            return enableCaching(context)
         }
         this.caching = false
         return this
     }
 
-    fun enableCaching(cacheStorageSpace: Int = 5, cacheTimeLimit: Int = 60 * 24 * 7): RetrofitClient {
+    fun enableCaching(context: Context, cacheStorageSpace: Int = 5, cacheTimeLimit: Int = 60 * 24 * 7): RetrofitClient {
         //Todo:cacheStorageSpace is MG and  cacheTimeLimit is Minutes
-        return setCacheStorageSpace(cacheStorageSpace)
-            .setCacheLifeTime(cacheTimeLimit)
-            .setupCaching()
+        return setCacheLifeTime(cacheTimeLimit).setCacheStorageSpace(context, cacheStorageSpace)
     }
 
-    fun setCacheStorageSpace(cacheStorageSpace: Int): RetrofitClient {
+    fun setCacheStorageSpace(context: Context, cacheStorageSpace: Int): RetrofitClient {
         //Todo:cacheStorageSpace is MG
         this.cacheStorageSpace = (cacheStorageSpace * 1024 * 1024).toLong()
-        return setupCaching()
+        return setupCaching(context)
     }
 
-    fun setCacheStorageSpace(cacheStorageSpace: Long): RetrofitClient {
+    fun setCacheStorageSpace(context: Context, cacheStorageSpace: Long): RetrofitClient {
         //Todo:cacheStorageSpace is Byte
         this.cacheStorageSpace = cacheStorageSpace
-        return setupCaching()
+        return setupCaching(context)
     }
 
     fun setCacheLifeTime(cacheLifeTime: Int): RetrofitClient {
@@ -150,20 +149,18 @@ open class RetrofitClient(private val context: Context) {
         return setCacheLifeTime(cacheLifeTimeDays * 60 * 24)
     }
 
-    protected fun setupCaching(): RetrofitClient {
-        context?.let {
-            this.caching = true
-            myCache = Cache(it.cacheDir, cacheStorageSpace)
-        }
+    protected fun setupCaching(context: Context): RetrofitClient {
+        this.caching = true
+        myCache = Cache(context.cacheDir, cacheStorageSpace)
         return this
     }
 
     //Build
-    fun build(): RetrofitClient {
-        return build(BASE_URL)
+    fun build(context: Context? = null): RetrofitClient {
+        return build(BASE_URL, context)
     }
 
-    fun build(urlKey: String): RetrofitClient {
+    fun build(urlKey: String, context: Context? = null): RetrofitClient {
         val okHttpClientBuilder = OkHttpClient.Builder()
 
         if (logRequest) {
@@ -206,14 +203,15 @@ open class RetrofitClient(private val context: Context) {
             .readTimeout(readingTimeout, TimeUnit.SECONDS)
             .addInterceptor {
                 var request = it.request()
-                request = if (!caching || hasNetworkConnection()!!) {
+
+                request = if (!caching || (context != null && hasNetworkConnection(context))) {
                     /*
                     *  If there is Internet, get the cache that was stored 5 seconds ago.
                     *  If the cache is older than 5 seconds, then discard it,
                     *  and indicate an error in fetching the response.
                     *  The 'max-age' attribute is responsible for this behavior.
                     */
-                    if (caching && logRequest)
+                    if (logRequest && caching)
                         Log.d("OkHttp", "OnlineMode")
                     request.newBuilder().header("Cache-Control", "public, max-age=" + 5).build()
                 } else {
@@ -258,20 +256,21 @@ open class RetrofitClient(private val context: Context) {
     }
 
     //getClient
-    fun getClient(): Retrofit {
-        return getClient(BASE_URL)
+    fun getClient(context: Context? = null): Retrofit {
+        return getClient(BASE_URL, context)
     }
 
-    fun getClient(urlKey: String): Retrofit {
+    fun getClient(urlKey: String, context: Context? = null): Retrofit {
         if (retrofits[urlKey] == null) {
-            build(urlKey)
+            build(urlKey, context)
         }
         return retrofits[urlKey]!!
     }
 
     inner class Get<myResponse> : BaseRequest<myResponse>() {
-        override fun run() {
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+        override fun run(context: Context?) {
+            super.run(context)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
             requestHandler!!.onBeforeSend()
             (retrofit.create(ApiInterface::class.java).get(
                 path!!,
@@ -289,9 +288,10 @@ open class RetrofitClient(private val context: Context) {
     }
 
     inner class Post<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
-        override fun run() {
+        override fun run(context: Context?) {
+            super.run(context)
 
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
             requestHandler!!.onBeforeSend()
 
@@ -312,8 +312,9 @@ open class RetrofitClient(private val context: Context) {
     }
 
     inner class Put<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
-        override fun run() {
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+        override fun run(context: Context?) {
+            super.run(context)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
             requestHandler!!.onBeforeSend()
 
@@ -334,8 +335,9 @@ open class RetrofitClient(private val context: Context) {
     }
 
     inner class Path<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
-        override fun run() {
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+        override fun run(context: Context?) {
+            super.run(context)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
             requestHandler!!.onBeforeSend()
 
@@ -356,8 +358,9 @@ open class RetrofitClient(private val context: Context) {
     }
 
     inner class Delete<myResponse> : BaseRequest<myResponse>() {
-        override fun run() {
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+        override fun run(context: Context?) {
+            super.run(context)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
             requestHandler!!.onBeforeSend()
 
@@ -377,8 +380,9 @@ open class RetrofitClient(private val context: Context) {
     }
 
     inner class Option<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
-        override fun run() {
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+        override fun run(context: Context?) {
+            super.run(context)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
             requestHandler!!.onBeforeSend()
 
@@ -399,8 +403,9 @@ open class RetrofitClient(private val context: Context) {
     }
 
     inner class MultiPart<myResponse> : MultiPartBaseRequest<myResponse>() {
-        override fun run() {
-            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!)
+        override fun run(context: Context?) {
+            super.run(context)
+            val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
             requestHandler!!.onBeforeSend()
 
@@ -432,6 +437,7 @@ open class RetrofitClient(private val context: Context) {
         var urlParams: HashMap<String, String> = HashMap()
         var classOfT: Class<myResponse>? = null
         var requestHandler: RequestHandler<myResponse>? = null
+        var context: Context? = null
 
         open fun setRequestHeader(key: String, value: String): BaseRequest<myResponse> {
             this.requestHeader[key] = value
@@ -482,7 +488,8 @@ open class RetrofitClient(private val context: Context) {
             return this
         }
 
-        open fun run() {
+        open fun run(context: Context? = null) {
+            this.context = context
         }
     }
 
@@ -551,6 +558,7 @@ open class RetrofitClient(private val context: Context) {
         var part: MultipartBody.Part? = null
         var classOfT: Class<myResponse>? = null
         var requestHandler: RequestHandler<myResponse>? = null
+        var context: Context? = null
         open fun setRequestHeader(key: String, value: String): MultiPartBaseRequest<myResponse> {
             this.requestHeader[key] = value
             return this
@@ -613,7 +621,8 @@ open class RetrofitClient(private val context: Context) {
             return this
         }
 
-        open fun run() {
+        open fun run(context: Context?) {
+            this.context = context
         }
     }
 
@@ -651,9 +660,9 @@ open class RetrofitClient(private val context: Context) {
     }
 
     //Utils
-    fun hasNetworkConnection(): Boolean? {
-        var isConnected: Boolean? = false // Initial Value
-        val connectivityManager = context!!.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    fun hasNetworkConnection(context: Context): Boolean {
+        var isConnected = false // Initial Value
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
         if (activeNetwork != null && activeNetwork.isConnected)
             isConnected = true
