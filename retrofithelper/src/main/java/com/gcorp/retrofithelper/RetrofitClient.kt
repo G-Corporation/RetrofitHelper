@@ -641,7 +641,7 @@ open class RetrofitClient {
 
             val res = Response(t, classOfT)
 
-            if (t.code() != 202) {
+            if (t.code() != 200) {
                 requestHandler?.onError(res)
                 return
             }
