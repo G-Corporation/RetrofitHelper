@@ -10,7 +10,7 @@ class BaseApp : Application() {
         retrofitClient =
             RetrofitClient.instance.setBaseUrl("http://192.168.1.2/test/")
                 .setUrl("mili","http://7468e347.ngrok.io/api/")
-                .setConnectionTimeout(15)
+                .setConnectionTimeout(4)
                 .enableCaching(this)
                 .setReadingTimeout(15)
                 .addHeader("Accept", "application/json")

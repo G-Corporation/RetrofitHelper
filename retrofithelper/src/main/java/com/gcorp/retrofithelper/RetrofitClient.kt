@@ -641,21 +641,20 @@ open class RetrofitClient {
 
             val res = Response(t, classOfT)
 
-            if (t.code() != 200) {
+            if (t.code() != 202) {
                 requestHandler?.onError(res)
                 return
             }
             requestHandler?.onSuccess(res)
-
         }
 
         override fun onCompleted() {
-            requestHandler?.onComplete()
         }
 
         override fun onError(e: Throwable?) {
-            requestHandler?.onFailed(e)
             e?.printStackTrace()
+            requestHandler?.onFailed(e)
+
         }
     }
 

@@ -89,11 +89,18 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onError(response: Response<T3>?) {
                     super.onError(response)
+                    Log.e("Error", ":DDD errrrror -> onError")
                 }
 
                 override fun onFailed(e: Throwable?) {
                     super.onFailed(e)
                     Log.e("Error", ":DDD errrrror -> ${e!!.message}")
+                }
+
+                override fun onComplete() {
+                    super.onComplete()
+
+                    Log.e("Ari","onComplete :DDDDDDDDDDDDDDDDDD")
                 }
             })
             .run(this)
