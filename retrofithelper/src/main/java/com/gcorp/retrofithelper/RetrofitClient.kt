@@ -44,7 +44,7 @@ open class RetrofitClient {
     protected val retrofits = HashMap<String, Retrofit>()
     protected var caching: Boolean = false
     protected var cacheStorageSpace = (5 * 1024 * 1024).toLong()
-    protected var cacheTimeLimit = 60 * 60 * 24 * 7
+    protected var cacheTimeLimit = TimeUnit.DAYS.toMillis(7)
     protected var myCache: Cache? = null
 
     fun setBaseUrl(baseUrl: String): RetrofitClient {
@@ -122,8 +122,8 @@ open class RetrofitClient {
         return this
     }
 
-    fun enableCaching(context: Context, cacheStorageSpace: Int = 5, cacheTimeLimit: Int = 60 * 24 * 7): RetrofitClient {
-        //Todo:cacheStorageSpace is MG and  cacheTimeLimit is Minutes
+    fun enableCaching(context: Context, cacheStorageSpace: Int = 5, cacheTimeLimit: Long = TimeUnit.DAYS.toMillis(7)): RetrofitClient {
+        //Todo:cacheStorageSpace is MG and  cacheTimeLimit is Millisecond
         return setCacheLifeTime(cacheTimeLimit).setCacheStorageSpace(context, cacheStorageSpace)
     }
 
@@ -133,20 +133,20 @@ open class RetrofitClient {
         return setupCaching(context)
     }
 
-    fun setCacheStorageSpace(context: Context, cacheStorageSpace: Long): RetrofitClient {
+    fun setCacheStorageSpaceByte(context: Context, cacheStorageSpace: Long): RetrofitClient {
         //Todo:cacheStorageSpace is Byte
         this.cacheStorageSpace = cacheStorageSpace
         return setupCaching(context)
     }
 
-    fun setCacheLifeTime(cacheLifeTime: Int): RetrofitClient {
-        //Todo:cacheTimeLimit is Minutes
-        this.cacheTimeLimit = cacheLifeTime * 60
+    fun setCacheLifeTime(cacheLifeTime: Long): RetrofitClient {
+        //Todo:cacheTimeLimit is Millisecond
+        this.cacheTimeLimit = cacheLifeTime
         return this
     }
 
     fun setCacheLifeTimeDays(cacheLifeTimeDays: Int): RetrofitClient {
-        return setCacheLifeTime(cacheLifeTimeDays * 60 * 24)
+        return setCacheLifeTime(TimeUnit.DAYS.toMillis(cacheLifeTimeDays.toLong()))
     }
 
     protected fun setupCaching(context: Context): RetrofitClient {
