@@ -1,18 +1,12 @@
 package com.gcorp.retrofithelperexample
 
-import android.graphics.BitmapFactory
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.JsonReader
 import android.util.Log
 import com.gcorp.retrofithelper.RequestHandler
 import com.gcorp.retrofithelper.Response
 import com.gcorp.retrofithelperexample.BaseApp.Companion.retrofitClient
-import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.Serializable
-import java.io.StringReader
-import kotlin.math.log
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,8 +17,8 @@ class MainActivity : AppCompatActivity() {
 //
 //        retrofitClient.Put<T,T2>()
 //            .setBaseUrlKey("salam")
-//            .setRequestHeader("tcl", "salam2")
-//            .setRequestHeader("vcl", "vcl1")
+//            .addRequestHeader("tcl", "salam2")
+//            .addRequestHeader("vcl", "vcl1")
 //            .setPath("test")
 //            .setUrlParams("param1", "Salam")
 //            .setRequest(T())
@@ -33,7 +27,7 @@ class MainActivity : AppCompatActivity() {
 //                    super.onSuccess(response)
 //                    retrofitClient.Put<T,T2>()
 //                        .setBaseUrlKey("salam")
-//                        .setRequestHeader("vcl2", "vcl2")
+//                        .addRequestHeader("vcl2", "vcl2")
 //                        .setPath("test")
 //                        .setUrlParams("param1", "Salam")
 //                        .setRequest(T())
@@ -60,25 +54,22 @@ class MainActivity : AppCompatActivity() {
 //        aa.items.forEach {
 //            Log.e("Ary", "${it.name} -> ${it.url}")
 //        }
-        request()
+        getRequest()
         requestBtn.setOnClickListener {
-            request()
+            getRequest()
         }
     }
 
-    fun request() {
+    fun getRequest() {
         retrofitClient.Get<T3>()
             .setPath("items.json")
+            .addRequestHeader("requestHeaderKey","requestHeaderValue")
+            .addRequestHeader("requestHeaderKey2","requestHeaderValue2")
             .setRequestHandler(T3::class.java, object : RequestHandler<T3>() {
                 override fun onSuccess(response: Response<T3>) {
                     super.onSuccess(response)
-
-//                    EEEERRRRRRRRRORRRRRRRRRR is hear
-//                            ||||||||||||||||||
-//                            >>>>>>>>>>>>>>>
-
-                    Log.e("Ary", "raw -> " + response.raw!!.toString())
-                    Log.e("Ary", "raw.body -> " + response.raw!!.body())
+                    Log.e("Log", "raw -> " + response.raw!!.toString())
+                    Log.e("Log", "raw.body -> " + response.raw!!.body())
 
                     text += "\n\n"
                     response.body.items?.forEach {
@@ -106,8 +97,108 @@ class MainActivity : AppCompatActivity() {
             .run(this)
     }
 
-    inner class T {
-        var bye: String = ":DDDDDDD"
+    fun getRequestOnAnotherPath() {
+        //path2 is key | value set on BaseApp
+        retrofitClient.Get<T3>()
+            .setBaseUrlKey("path2")
+            .addRequestHeader("requestHeaderKey","requestHeaderValue")
+            .setPath("items.json")
+            .setRequestHandler(T3::class.java, object : RequestHandler<T3>() {
+                override fun onSuccess(response: Response<T3>) {
+                    super.onSuccess(response)
+                    Log.e("Log", "raw -> " + response.raw!!.toString())
+                    Log.e("Log", "raw.body -> " + response.raw!!.body())
+
+                    text += "\n\n"
+                    response.body.items?.forEach {
+                        text += it.name + ", "
+                    }
+                    textTv.text = text
+                }
+
+                override fun onError(response: Response<T3>?) {
+                    super.onError(response)
+                    Log.e("Error", ":DDD errrrror -> onError")
+                }
+
+                override fun onFailed(e: Throwable?) {
+                    super.onFailed(e)
+                    Log.e("Error", ":DDD errrrror -> ${e!!.message}")
+                }
+
+                override fun onComplete() {
+                    super.onComplete()
+
+                    Log.e("Ari","onComplete :DDDDDDDDDDDDDDDDDD")
+                }
+            })
+            .run(this)
+    }
+
+    fun postRequest(){
+        retrofitClient.Post<T2,T3>()
+            .setPath("post-method")
+            .addRequestHeader("requestHeaderKey","requestHeaderValue")
+            .addRequestHeader("requestHeaderKey2","requestHeaderValue2")
+            .setRequestHandler(T3::class.java,object :RequestHandler<T3>(){
+                override fun onBeforeSend() {
+                    super.onBeforeSend()
+                }
+
+                override fun onSuccess(response: Response<T3>) {
+                    super.onSuccess(response)
+                }
+
+                override fun onError(response: Response<T3>?) {
+                    super.onError(response)
+                }
+
+                override fun onFailed(e: Throwable?) {
+                    super.onFailed(e)
+                }
+
+                override fun onComplete() {
+                    super.onComplete()
+                }
+            })
+            .run(this)
+    }
+
+    fun postRequestOnAnotherPath(){
+        retrofitClient.Post<T2,T3>()
+            .setBaseUrlKey("path2")
+            .addRequestHeader("requestHeaderKey","requestHeaderValue")
+            .setPath("post-method")
+            .setRequestHandler(T3::class.java,object :RequestHandler<T3>(){
+                override fun onBeforeSend() {
+                    super.onBeforeSend()
+                }
+
+                override fun onSuccess(response: Response<T3>) {
+                    super.onSuccess(response)
+                }
+
+                override fun onError(response: Response<T3>?) {
+                    super.onError(response)
+                }
+
+                override fun onFailed(e: Throwable?) {
+                    super.onFailed(e)
+                }
+
+                override fun onComplete() {
+                    super.onComplete()
+                }
+            })
+    }
+
+    inner class T3 {
+        val items: List<Item>? = null
+
+        inner class Item{
+            var name: String = ""
+            var url: String = ""
+        }
     }
 
     open inner class T2 {

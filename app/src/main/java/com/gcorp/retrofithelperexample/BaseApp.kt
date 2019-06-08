@@ -9,7 +9,7 @@ class BaseApp : Application() {
 
         retrofitClient =
             RetrofitClient.instance.setBaseUrl("http://192.168.1.2/test/")
-                .setUrl("mili","http://7468e347.ngrok.io/api/")
+                .setUrl("path2","http://7468e347.ngrok.io/api/")
                 .setConnectionTimeout(4)
                 .enableCaching(this)
                 .setReadingTimeout(15)
