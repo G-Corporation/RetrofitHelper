@@ -1,24 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:orientation="vertical"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/ConstraintLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#e2e2e2"
         tools:context=".MainActivity">
 
-    <Button
-            android:id="@+id/requestBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Request"
-            android:layout_margin="15dp"/>
+    <TextView
+            android:id="@+id/log"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:background="#FFF"
+            android:padding="5dp"
+            app:layout_constraintBottom_toTopOf="@+id/send"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Request Result" />
 
     <TextView
-            android:id="@+id/textTv"
-            android:layout_width="match_parent"
+            android:id="@+id/method"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="Req test"
-            android:padding="5dp"/>
-</LinearLayout>
+            android:layout_margin="8dp"
+            android:text="Method"
+            app:layout_constraintBottom_toBottomOf="@+id/send"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/send" />
+
+    <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:entries="@array/request_methods"
+            android:padding="8dp"
+            android:spinnerMode="dialog"
+            app:layout_constraintBottom_toBottomOf="@+id/method"
+            app:layout_constraintStart_toEndOf="@+id/method"
+            app:layout_constraintTop_toTopOf="@+id/method" />
+
+    <Button
+            android:id="@+id/send"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:layout_marginBottom="16dp"
+            android:background="#FFF"
+            android:text="Request"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.6"
+            app:layout_constraintStart_toEndOf="@+id/spinner" />
+
+
+</android.support.constraint.ConstraintLayout>

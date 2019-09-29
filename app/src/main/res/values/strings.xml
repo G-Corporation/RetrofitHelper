@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">RetrofitHelperExample</string>
+    <array name="request_methods">
+        <item>POST</item>
+        <item>GET</item>
+        <item>PUT</item>
+        <item>PATCH</item>
+        <item>DELETE</item>
+    </array>
 </resources>

@@ -1,19 +1,26 @@
 package com.gcorp.retrofithelperexample
+
 import android.app.Application
 import com.gcorp.retrofithelper.RetrofitClient
 import java.util.*
 
-class BaseApp : Application() {
+class Application : Application() {
     override fun onCreate() {
         super.onCreate()
 
         retrofitClient =
-            RetrofitClient.instance.setBaseUrl("http://192.168.1.2/test/")
-                .setUrl("mili","http://7468e347.ngrok.io/api/")
+            RetrofitClient.instance
+                    //api url
+                .setBaseUrl("https://reqres.in/")
+                    //you can set multiple urls
+//                .setUrl("example","http://ngrok.io/api/")
+                    //set timeouts
                 .setConnectionTimeout(4)
-                .enableCaching(this)
                 .setReadingTimeout(15)
-                .addHeader("Accept", "application/json")
+                    //enable cache
+                .enableCaching(this)
+                    //add Headers
+                .addHeader("Content-Type", "application/json")
                 .addHeader("client", "android")
                 .addHeader("language", Locale.getDefault().language)
                 .addHeader("os", android.os.Build.VERSION.RELEASE)
@@ -21,6 +28,7 @@ class BaseApp : Application() {
     }
 
     companion object {
+
         lateinit var retrofitClient: RetrofitClient
 
     }

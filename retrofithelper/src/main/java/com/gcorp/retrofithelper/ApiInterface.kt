@@ -17,7 +17,7 @@ interface ApiInterface {
     fun put(@Url url: String, @QueryMap urlParams: HashMap<String, String>?, @Body request: Any?): Observable<Response<Any?>>
 
     @PATCH
-    fun path(@Url url: String, @QueryMap urlParams: HashMap<String, String>?, @Body request: Any?): Observable<Response<Any?>>
+    fun patch(@Url url: String, @QueryMap urlParams: HashMap<String, String>?, @Body request: Any?): Observable<Response<Any?>>
 
     @DELETE
     fun delete(@Url url: String, @QueryMap urlParams: HashMap<String, String>?): Observable<Response<Any?>>

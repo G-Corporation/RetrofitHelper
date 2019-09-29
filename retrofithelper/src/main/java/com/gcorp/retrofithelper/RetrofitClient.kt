@@ -271,14 +271,14 @@ open class RetrofitClient {
         override fun run(context: Context?) {
             super.run(context)
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
             (retrofit.create(ApiInterface::class.java).get(
                 path!!,
                 urlParams
             ) as Observable<retrofit2.Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -286,6 +286,30 @@ open class RetrofitClient {
                 })
         }
     }
+    /**
+     *  Post Request
+     *
+     * @param myRequest for Request body
+     * @param myResponse for Response body
+     *
+     * setBody() : sets the request body
+     * setUrlParams() : sets the URL Parameters Key-Value, HashMap
+     * setBody() : sets the request body
+     * setBody() : sets the request body
+     *
+     * ResponseHandler has 6 overrides:
+     *  onBeforeSend():
+     *      runs before making a request, it's good for showing loading and etc.
+     *  onSuccess():
+     *      runs when response code is 2**.
+     *  onError():
+     *      runs when response code is NOT 2**, handle server errors here.
+     *  onComplete():
+     *      runs after request even when it fails, it's good for stopping loading and etc.
+     *  onFailed():
+     *      runs on error, either in code or broken network connection
+     *
+     */
 
     inner class Post<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
         override fun run(context: Context?) {
@@ -293,7 +317,7 @@ open class RetrofitClient {
 
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
 
             (retrofit.create(ApiInterface::class.java).post(
                 path!!,
@@ -302,7 +326,7 @@ open class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -316,7 +340,7 @@ open class RetrofitClient {
             super.run(context)
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
 
             (retrofit.create(ApiInterface::class.java).put(
                 path!!,
@@ -325,7 +349,7 @@ open class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -334,21 +358,21 @@ open class RetrofitClient {
         }
     }
 
-    inner class Path<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
+    inner class Patch<myRequest, myResponse> : PostBaseRequest<myRequest, myResponse>() {
         override fun run(context: Context?) {
             super.run(context)
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
 
-            (retrofit.create(ApiInterface::class.java).path(
+            (retrofit.create(ApiInterface::class.java).patch(
                 path!!,
                 urlParams,
                 request
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -362,7 +386,7 @@ open class RetrofitClient {
             super.run(context)
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
 
             (retrofit.create(ApiInterface::class.java).delete(
                 path!!,
@@ -370,7 +394,7 @@ open class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -384,7 +408,7 @@ open class RetrofitClient {
             super.run(context)
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
 
             (retrofit.create(ApiInterface::class.java).option(
                 path!!,
@@ -393,7 +417,7 @@ open class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -407,7 +431,7 @@ open class RetrofitClient {
             super.run(context)
             val retrofit = addHeader(requestHeader).getClient(baseUrlKey!!, context)
 
-            requestHandler!!.onBeforeSend()
+            responseHandler!!.onBeforeSend()
 
             (retrofit.create(ApiInterface::class.java).multiPart(
                 path!!,
@@ -416,7 +440,7 @@ open class RetrofitClient {
             ) as Observable<Response<myResponse>>)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : MySubscriber<myResponse>(classOfT!!, requestHandler) {
+                .subscribe(object : MySubscriber<myResponse>(classOfT!!, responseHandler) {
                     override fun onCompleted() {
                         super.onCompleted()
                         removeHeader(requestHeader)
@@ -436,7 +460,7 @@ open class RetrofitClient {
         var path: String? = null
         var urlParams: HashMap<String, String> = HashMap()
         var classOfT: Class<myResponse>? = null
-        var requestHandler: RequestHandler<myResponse>? = null
+        var responseHandler: ResponseHandler<myResponse>? = null
         var context: Context? = null
 
         open fun setRequestHeader(key: String, value: String): BaseRequest<myResponse> {
@@ -479,12 +503,12 @@ open class RetrofitClient {
             return this
         }
 
-        open fun setRequestHandler(
+        open fun setResponseHandler(
             classOfT: Class<myResponse>,
-            requestHandler: RequestHandler<myResponse>
+            responseHandler: ResponseHandler<myResponse>
         ): BaseRequest<myResponse> {
             this.classOfT = classOfT
-            this.requestHandler = requestHandler
+            this.responseHandler = responseHandler
             return this
         }
 
@@ -496,8 +520,8 @@ open class RetrofitClient {
     abstract inner class PostBaseRequest<myRequest, myResponse> : BaseRequest<myResponse>() {
         var request: myRequest? = null
 
-        open fun setRequest(request: myRequest): PostBaseRequest<myRequest, myResponse> {
-            this.request = request
+        open fun setBody(body : myRequest): PostBaseRequest<myRequest, myResponse> {
+            this.request = body
             return this
         }
 
@@ -541,11 +565,11 @@ open class RetrofitClient {
             return this
         }
 
-        override fun setRequestHandler(
+        override fun setResponseHandler(
             classOfT: Class<myResponse>,
-            requestHandler: RequestHandler<myResponse>
+            responseHandler: ResponseHandler<myResponse>
         ): PostBaseRequest<myRequest, myResponse> {
-            super.setRequestHandler(classOfT, requestHandler)
+            super.setResponseHandler(classOfT, responseHandler)
             return this
         }
     }
@@ -557,7 +581,7 @@ open class RetrofitClient {
         var urlParams: HashMap<String, String> = HashMap()
         var part: MultipartBody.Part? = null
         var classOfT: Class<myResponse>? = null
-        var requestHandler: RequestHandler<myResponse>? = null
+        var responseHandler: ResponseHandler<myResponse>? = null
         var context: Context? = null
         open fun setRequestHeader(key: String, value: String): MultiPartBaseRequest<myResponse> {
             this.requestHeader[key] = value
@@ -614,10 +638,10 @@ open class RetrofitClient {
 
         open fun setRequestHandler(
             classOfT: Class<myResponse>,
-            requestHandler: RequestHandler<myResponse>
+            responseHandler: ResponseHandler<myResponse>
         ): MultiPartBaseRequest<myResponse> {
             this.classOfT = classOfT
-            this.requestHandler = requestHandler
+            this.responseHandler = responseHandler
             return this
         }
 
@@ -626,7 +650,7 @@ open class RetrofitClient {
         }
     }
 
-    open class MySubscriber<T>(private val classOfT: Class<T>, private val requestHandler: RequestHandler<T>?) :
+    open class MySubscriber<T>(private val classOfT: Class<T>, private val responseHandler: ResponseHandler<T>?) :
         Subscriber<Response<T>>() {
         override fun onNext(t: Response<T>?) {
 //            if (t != null) {
@@ -635,17 +659,17 @@ open class RetrofitClient {
 //                Log.e("Request", "body -> ${t.body()}")
 //            }
             if (t == null) {
-                requestHandler?.onFailed(Throwable("Response in null"))
+                responseHandler?.onFailed(Throwable("Response in null"))
                 return
             }
 
             val res = Response(t, classOfT)
 
-            if (t.code() != 200) {
-                requestHandler?.onError(res)
+            if (!t.code().toString().startsWith("2")) {
+                responseHandler?.onError(res)
                 return
             }
-            requestHandler?.onSuccess(res)
+            responseHandler?.onSuccess(res)
         }
 
         override fun onCompleted() {
@@ -653,7 +677,7 @@ open class RetrofitClient {
 
         override fun onError(e: Throwable?) {
             e?.printStackTrace()
-            requestHandler?.onFailed(e)
+            responseHandler?.onFailed(e)
 
         }
     }

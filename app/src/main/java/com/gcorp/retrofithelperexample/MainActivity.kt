@@ -1,118 +1,202 @@
 package com.gcorp.retrofithelperexample
 
-import android.graphics.BitmapFactory
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.JsonReader
-import android.util.Log
-import com.gcorp.retrofithelper.RequestHandler
+import com.gcorp.retrofithelper.ResponseHandler
 import com.gcorp.retrofithelper.Response
-import com.gcorp.retrofithelperexample.BaseApp.Companion.retrofitClient
-import com.google.gson.Gson
+import com.gcorp.retrofithelperexample.Application.Companion.retrofitClient
+import com.gcorp.retrofithelperexample.Model.*
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.Serializable
-import java.io.StringReader
-import kotlin.math.log
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import okhttp3.MultipartBody
+import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
-    var text = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-//
-//        retrofitClient.Put<T,T2>()
-//            .setBaseUrlKey("salam")
-//            .setRequestHeader("tcl", "salam2")
-//            .setRequestHeader("vcl", "vcl1")
-//            .setPath("test")
-//            .setUrlParams("param1", "Salam")
-//            .setRequest(T())
-//            .setRequestHandler(object : RequestHandler<T2>(){
-//                override fun onSuccess(response: Response<T2>) {
-//                    super.onSuccess(response)
-//                    retrofitClient.Put<T,T2>()
-//                        .setBaseUrlKey("salam")
-//                        .setRequestHeader("vcl2", "vcl2")
-//                        .setPath("test")
-//                        .setUrlParams("param1", "Salam")
-//                        .setRequest(T())
-//                        .setRequestHandler(object : RequestHandler<T2>(){
-//                            override fun onSuccess(response: Response<T2>) {
-//                                super.onSuccess(response)
-//
-//                            }
-//
-//                        })
-//                        .run()
-//                }
-//            })
-//            .run()
 
-//        val json =
-//            "{items=[{name=Fruit Ninja Fight, url=https://www.farsroid.com/wp-content/uploads/Fruit-Ninja-Fight-Logo-150x150.png}, {name=Trailer Park Boys, url=https://www.farsroid.com/wp-content/uploads/Trailer-Park-Boys-Greasy-Money-logo-c-150x150.png}, {name=Cradle of Empires, url=https://www.farsroid.com/wp-content/uploads/Cradle-of-Empires-logo-d-150x150.png}, {name=Disco Ducks, url=https://www.farsroid.com/wp-content/uploads/Disco-Ducks-150x150.png}, {name=Manor Cafe, url=https://www.farsroid.com/wp-content/uploads/Manor-Cafe-logo-f-150x150.png}, {name=Live or Die: Survival, url=https://www.farsroid.com/wp-content/uploads/Live-or-Die-survival-2019-logo-150x150.jpg}]}"
-//
-//
-
-//        val aa = Gson().fromJson<T3>(Gson().toJson(json), T3::class.java)
-//
-//        Log.e("Ary", "T3 -> ${aa.items!!.size}")
-//        aa.items.forEach {
-//            Log.e("Ary", "${it.name} -> ${it.url}")
-//        }
-        request()
-        requestBtn.setOnClickListener {
-            request()
+        send.setOnClickListener {
+            when (spinner.selectedItemPosition) {
+                // POST
+                0 -> postRequest()
+                // GET
+                1 -> getRequest()
+                //PUT
+                2 -> putRequest()
+                //PATCH
+                3 -> patchRequest()
+                //DELETE
+                4 -> deleteRequest()
+            }
         }
     }
 
-    fun request() {
-        retrofitClient.Get<T3>()
-            .setPath("items.json")
-            .setRequestHandler(T3::class.java, object : RequestHandler<T3>() {
-                override fun onSuccess(response: Response<T3>) {
-                    super.onSuccess(response)
 
-//                    EEEERRRRRRRRRORRRRRRRRRR is hear
-//                            ||||||||||||||||||
-//                            >>>>>>>>>>>>>>>
-
-                    Log.e("Ary", "raw -> " + response.raw!!.toString())
-                    Log.e("Ary", "raw.body -> " + response.raw!!.body())
-
-                    text += "\n\n"
-                    response.body.items?.forEach {
-                        text += it.name + ", "
+    /**
+     *  Post Request
+     *
+     * PostRequestModel for Request body
+     * PostResponseModel for Response body
+     *
+     * NOTE: These methods are for all type of request methods and nor just POST
+     *
+     * setBody() : sets the request body
+     * setUrlParams() : sets the URL Parameters Key-Value, HashMap
+     * setBaseUrlKey("key") for key-value urls that had been set in Application class
+     * setBody() : sets the request body
+     * setBody() : sets the request body
+     *
+     * ResponseHandler has 6 overrides:
+     *  onBeforeSend():
+     *      runs before making a request, it's good for showing loading and etc.
+     *  onSuccess():
+     *      runs when response code is 2**.
+     *  onError():
+     *      runs when response code is NOT 2**, handle server errors here.
+     *  onComplete():
+     *      runs after request even when it fails, it's good for stopping loading and etc.
+     *  onFailed():
+     *      runs on error, either in code or broken network connection
+     *
+     */
+    private fun postRequest() {
+        retrofitClient.Post<PostRequestModel, PostResponseModel>()
+            .setPath("api/users")
+            //set headers Key-Value or HashMap
+//            .setRequestHeader()
+            //set url params Key-Value or HashMap
+//            .setUrlParams()
+            .setBody(PostRequestModel("morpheus", "leader"))
+            .setResponseHandler(PostResponseModel::class.java,
+                object : ResponseHandler<PostResponseModel>() {
+                    override fun onSuccess(response: Response<PostResponseModel>) {
+                        super.onSuccess(response)
+                        //handle response
+                        log.text = response.body.toString()
                     }
-                    textTv.text = text
-                }
 
-                override fun onError(response: Response<T3>?) {
-                    super.onError(response)
-                    Log.e("Error", ":DDD errrrror -> onError")
-                }
+                    override fun onBeforeSend() {
+                        super.onBeforeSend()
+                    }
 
-                override fun onFailed(e: Throwable?) {
-                    super.onFailed(e)
-                    Log.e("Error", ":DDD errrrror -> ${e!!.message}")
-                }
+                    override fun onError(response: Response<PostResponseModel>?) {
+                        super.onError(response)
+                    }
 
-                override fun onComplete() {
-                    super.onComplete()
+                    override fun onFailed(e: Throwable?) {
+                        super.onFailed(e)
+                    }
 
-                    Log.e("Ari","onComplete :DDDDDDDDDDDDDDDDDD")
-                }
-            })
+                    override fun onComplete() {
+                        super.onComplete()
+                    }
+                })
+            //DO NOT FORGET TO CALL .run()
             .run(this)
     }
 
-    inner class T {
-        var bye: String = ":DDDDDDD"
+    //This is a Sample GET Request
+    private fun getRequest() {
+        retrofitClient.Get<GetResponseModel>()
+            .setPath("api/users/2")
+            //set headers Key-Value or HashMap
+//            .setRequestHeader()
+            //set url params Key-Value or HashMap
+//            .setUrlParams()
+            .setUrlParams("KEY","Value")
+            .setResponseHandler(GetResponseModel::class.java,
+                object : ResponseHandler<GetResponseModel>() {
+                    override fun onSuccess(response: Response<GetResponseModel>) {
+                        super.onSuccess(response)
+                        log.text = response.body.toString()
+                    }
+                }).run(this)
     }
 
-    open inner class T2 {
-        var id: String = "pashm"
-        var name: String = "pashm"
-        var isComplete: Boolean = false
+    //This is a Sample PUT Request
+    private fun putRequest() {
+        retrofitClient.Put<PutRequestModel, PutResponseModel>()
+            .setPath("api/users/2")
+            //set headers Key-Value or HashMap
+//            .setRequestHeader()
+            //set url params Key-Value or HashMap
+//            .setUrlParams()
+            .setBody(PutRequestModel("morpheus","zion resident"))
+            .setResponseHandler(PutResponseModel::class.java,object : ResponseHandler<PutResponseModel>(){
+                override fun onSuccess(response: Response<PutResponseModel>) {
+                    super.onSuccess(response)
+                    log.text = response.body.toString()
+                }
+            })
+            .run()
+
     }
+
+    //This is a Sample PATCH Request
+    private fun patchRequest() {
+        retrofitClient.Patch<PatchRequestModel, PatchResponseModel>()
+            .setPath("api/users/2")
+            //set headers Key-Value or HashMap
+//            .setRequestHeader()
+            //set url params Key-Value or HashMap
+//            .setUrlParams()
+            .setBody(PatchRequestModel("morpheus","zion resident"))
+            .setResponseHandler(PatchResponseModel::class.java,
+                object : ResponseHandler<PatchResponseModel>() {
+                    override fun onSuccess(response: Response<PatchResponseModel>) {
+                        super.onSuccess(response)
+                        log.text = response.body.toString()
+
+                    }
+                }).run()
+
+    }
+
+    //This is a Sample DELETE Request
+    private fun deleteRequest() {
+        retrofitClient.Delete<DeleteResponseModel>()
+            .setPath("api/users/2")
+            //set headers Key-Value or HashMap
+//            .setRequestHeader()
+            //set url params Key-Value or HashMap
+//            .setUrlParams()
+            .setResponseHandler(DeleteResponseModel::class.java,
+                object : ResponseHandler<DeleteResponseModel>() {
+                    override fun onSuccess(response: Response<DeleteResponseModel>) {
+                        super.onSuccess(response)
+                        log.text = "Deleted Successfully"
+
+                    }
+                }).run()
+    }
+
+    //This is a sample MULTIPART request
+    private fun multiPartRequest(filePath:String){
+        //Create a file object using file path
+        val file = File(filePath)
+        // Create a request body with file and image media type
+        val fileReqBody = RequestBody.create(MediaType.parse("image/*"), file)
+        // Create MultipartBody.Part using file request-body,file name and part name
+        val part = MultipartBody.Part.createFormData("upload", file.name, fileReqBody)
+        //Create request body with text description and text media type
+        val description = RequestBody.create(MediaType.parse("text/plain"), "image-type")
+
+        retrofitClient.MultiPart<MultiPartResponseModel>()
+            .setPath("")
+            .setPart(part)
+            .setUrlParams("type","image")
+            .setRequestHandler(MultiPartResponseModel::class.java,object :ResponseHandler<MultiPartResponseModel>(){
+                override fun onSuccess(response: Response<MultiPartResponseModel>) {
+                    super.onSuccess(response)
+                    //success
+                }
+            })
+    }
+
+
+
 }

@@ -3,7 +3,7 @@ package com.gcorp.retrofithelper
 import android.util.Log
 
 
-open class RequestHandler<T> : RequestInterface<T> {
+open class ResponseHandler<T> : RequestInterface<T> {
     override fun onBeforeSend() {
         super.onBeforeSend()
     }
