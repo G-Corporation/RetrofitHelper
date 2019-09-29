@@ -1,4 +1,8 @@
-# RetrofitHelper Add
+# Retrofit Helper
+This is a library written in __Kotlin__ made for simplifying api calls using __retrofit__.  
+Documentation can be found in [wiki](https://github.com/G-Corporation/RetrofitHelper/wiki)
+
+## Adding to project
 	allprojects {
 		repositories {
 			...
@@ -10,7 +14,7 @@
 	        implementation 'com.github.G-Corporation:RetrofitHelper:1.1.5'
 	}
 
-# installation
+## Application Class
 
 	class App : Application() {
 
