@@ -1,4 +1,4 @@
-# Retrofit Helper
+# Retrofit Helper [![](https://jitpack.io/v/G-Corporation/RetrofitHelper.svg)](https://jitpack.io/#G-Corporation/RetrofitHelper)  
 This is a library written in __Kotlin__, for simplifying api calls using __retrofit__.  
 Documentation can be found in [wiki](https://github.com/G-Corporation/RetrofitHelper/wiki)
 
