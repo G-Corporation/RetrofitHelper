@@ -7,7 +7,10 @@ import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.util.Log
 import com.google.gson.GsonBuilder
-import okhttp3.*
+import okhttp3.Cache
+import okhttp3.CacheControl
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -17,12 +20,17 @@ import rx.Observable
 import rx.Subscriber
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
-import java.io.*
-import java.lang.NullPointerException
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.*
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
+
 
 open class RetrofitClient {
     companion object {
@@ -35,6 +43,7 @@ open class RetrofitClient {
         }
     }
 
+    val HEADER_CACHE_CONTROL = "Cache-Control"
     protected val urls = HashMap<String, String>()
     protected var logRequest: Boolean = true
     protected var connectionTimeout: Long = 15
@@ -43,8 +52,8 @@ open class RetrofitClient {
     protected var headers = HashMap<String, String>()
     protected val retrofits = HashMap<String, Retrofit>()
     protected var caching: Boolean = false
-    protected var cacheStorageSpace = (5 * 1024 * 1024).toLong()
-    protected var cacheTimeLimit = TimeUnit.DAYS.toMillis(7)
+    protected var cacheStorageSpace = (10 * 1024 * 1024).toLong()
+    protected var cacheTimeLimit = TimeUnit.DAYS.toSeconds(7)
     protected var myCache: Cache? = null
 
     fun setBaseUrl(baseUrl: String): RetrofitClient {
@@ -122,8 +131,12 @@ open class RetrofitClient {
         return this
     }
 
-    fun enableCaching(context: Context, cacheStorageSpace: Int = 5, cacheTimeLimit: Long = TimeUnit.DAYS.toMillis(7)): RetrofitClient {
-        //Todo:cacheStorageSpace is MG and  cacheTimeLimit is Millisecond
+    fun enableCaching(
+        context: Context,
+        cacheStorageSpace: Int = 10,
+        cacheTimeLimit: Long = TimeUnit.DAYS.toSeconds(7)
+    ): RetrofitClient {
+        //Todo:cacheStorageSpace is MG and  cacheTimeLimit is Seconds
         return setCacheLifeTime(cacheTimeLimit).setCacheStorageSpace(context, cacheStorageSpace)
     }
 
@@ -140,13 +153,13 @@ open class RetrofitClient {
     }
 
     fun setCacheLifeTime(cacheLifeTime: Long): RetrofitClient {
-        //Todo:cacheTimeLimit is Millisecond
+        //Todo:cacheTimeLimit is Seconds
         this.cacheTimeLimit = cacheLifeTime
         return this
     }
 
     fun setCacheLifeTimeDays(cacheLifeTimeDays: Int): RetrofitClient {
-        return setCacheLifeTime(TimeUnit.DAYS.toMillis(cacheLifeTimeDays.toLong()))
+        return setCacheLifeTime(TimeUnit.DAYS.toSeconds(cacheLifeTimeDays.toLong()))
     }
 
     protected fun setupCaching(context: Context): RetrofitClient {
@@ -211,9 +224,13 @@ open class RetrofitClient {
                     *  and indicate an error in fetching the response.
                     *  The 'max-age' attribute is responsible for this behavior.
                     */
+                    val cacheControl = CacheControl.Builder()
+                        .maxAge(0, TimeUnit.SECONDS)
+                        .build()
                     if (logRequest && caching)
                         Log.d("OkHttp", "OnlineMode")
-                    request.newBuilder().header("Cache-Control", "public, max-age=" + 5).build()
+                    request.newBuilder().removeHeader("Pragma")
+                        .header(HEADER_CACHE_CONTROL, cacheControl.toString()).build()
                 } else {
                     /*
                     *  If there is no Internet, get the cache that was stored $cacheTimeLimit ago.
@@ -222,11 +239,17 @@ open class RetrofitClient {
                     *  The 'max-stale' attribute is responsible for this behavior.
                     *  The 'only-if-cached' attribute indicates to not retrieve new data; fetch the cache only instead.
                     */
+
+
+                    val cacheControl = CacheControl.Builder()
+                        .maxStale(cacheTimeLimit.toInt(), TimeUnit.MILLISECONDS)
+                        .build()
+
                     if (logRequest)
                         Log.d("OkHttp", "OfflineMode")
-                    request.newBuilder().header(
-                        "Cache-Control",
-                        "public, only-if-cached, max-stale=$cacheTimeLimit"
+                    request.newBuilder().removeHeader("Pragma").header(
+                        HEADER_CACHE_CONTROL,
+                        cacheControl.toString()
                     ).build()
                 }
 
@@ -247,9 +270,9 @@ open class RetrofitClient {
 
         retrofits[urlKey] = Retrofit.Builder()
             .baseUrl(urls[urlKey]!!)
-            .addConverterFactory(GsonConverterFactory.create(gSonBuilder))
             .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
             .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gSonBuilder))
             .build()
 
         return this
@@ -463,12 +486,12 @@ open class RetrofitClient {
         var responseHandler: ResponseHandler<myResponse>? = null
         var context: Context? = null
 
-        open fun setRequestHeader(key: String, value: String): BaseRequest<myResponse> {
+        open fun addRequestHeader(key: String, value: String): BaseRequest<myResponse> {
             this.requestHeader[key] = value
             return this
         }
 
-        open fun setRequestHeader(requestHeader: HashMap<String, String>): BaseRequest<myResponse> {
+        open fun addRequestHeader(requestHeader: HashMap<String, String>): BaseRequest<myResponse> {
             this.requestHeader.putAll(requestHeader)
             return this
         }
@@ -525,13 +548,13 @@ open class RetrofitClient {
             return this
         }
 
-        override fun setRequestHeader(key: String, value: String): PostBaseRequest<myRequest, myResponse> {
-            super.setRequestHeader(key, value)
+        override fun addRequestHeader(key: String, value: String): PostBaseRequest<myRequest, myResponse> {
+            super.addRequestHeader(key, value)
             return this
         }
 
-        override fun setRequestHeader(requestHeader: HashMap<String, String>): PostBaseRequest<myRequest, myResponse> {
-            super.setRequestHeader(requestHeader)
+        override fun addRequestHeader(requestHeader: HashMap<String, String>): PostBaseRequest<myRequest, myResponse> {
+            super.addRequestHeader(requestHeader)
             return this
         }
 
@@ -665,9 +688,18 @@ open class RetrofitClient {
 
             val res = Response(t, classOfT)
 
+
             if (!t.code().toString().startsWith("2")) {
                 responseHandler?.onError(res)
                 return
+            }
+
+            if (res.raw?.cacheResponse() != null) {
+                // true: response was served from cache
+            }
+
+            if (res.raw?.networkResponse() != null) {
+                // true: response was served from network/server
             }
             responseHandler?.onSuccess(res)
         }

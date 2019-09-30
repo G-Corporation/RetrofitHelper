@@ -1,5 +1,4 @@
 package com.gcorp.retrofithelperexample
-
 import android.app.Application
 import com.gcorp.retrofithelper.RetrofitClient
 import java.util.*
