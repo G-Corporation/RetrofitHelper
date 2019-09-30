@@ -1,4 +1,5 @@
-# Retrofit Helper [![](https://jitpack.io/v/G-Corporation/RetrofitHelper.svg)](https://jitpack.io/#G-Corporation/RetrofitHelper)  
+# Retrofit Helper [![](https://jitpack.io/v/G-Corporation/RetrofitHelper.svg)](https://jitpack.io/#G-Corporation/RetrofitHelper)
+  
 This is a library written in __Kotlin__, for simplifying api calls using __retrofit__.  
 Documentation can be found in [wiki](https://github.com/G-Corporation/RetrofitHelper/wiki) or just see the exapmle app.  
 
@@ -11,7 +12,7 @@ Documentation can be found in [wiki](https://github.com/G-Corporation/RetrofitHe
 	}
 
 	dependencies {
-	        implementation 'com.github.G-Corporation:RetrofitHelper:1.1.5'
+	        implementation 'com.github.G-Corporation:RetrofitHelper:1.1.6'
 	}
 
 ## Application Class
