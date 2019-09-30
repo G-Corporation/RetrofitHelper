@@ -1,6 +1,6 @@
 # Retrofit Helper [![](https://jitpack.io/v/G-Corporation/RetrofitHelper.svg)](https://jitpack.io/#G-Corporation/RetrofitHelper)
  
->>> This is a library written in __Kotlin__, for simplifying api calls with __retrofit__.  
+> This is a library written in __Kotlin__, for simplifying api calls with __retrofit__.  
 
 It's as easy as this :
 ```kotlin
@@ -61,7 +61,7 @@ class Application : Application() {
 ## POST  
 Sample `POST` request:  
 
->>For more Api call methods see [API Calls](https://github.com/G-Corporation/RetrofitHelper/wiki/API-calls).  
+>For more Api call methods see [API Calls](https://github.com/G-Corporation/RetrofitHelper/wiki/API-calls).  
 
 ```kotlin
 retrofitClient.Post<PostRequestModel, PostResponseModel>()
