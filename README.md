@@ -119,7 +119,6 @@ retrofitClient.Post<PostRequestModel, PostResponseModel>()
         <a href="https://github.com/Aryan-mor">
             <img src="https://avatars1.githubusercontent.com/u/22844436?s=460&v=4" width="100px;" alt="Aryan Moradi" style="max-width:100%;border-radius: 100%;"/>
             <br />
-            <br />
             <sub>
                 <b>Aryan Moradi</b>
             </sub>
@@ -128,7 +127,6 @@ retrofitClient.Post<PostRequestModel, PostResponseModel>()
     <td align="center">
         <a href="https://github.com/mojirzg">
             <img src="https://avatars3.githubusercontent.com/u/29694641?s=460&v=4" width="100px;" alt="Aryan Moradi" style="max-width:100%;border-radius: 100%;"/>
-            <br />
             <br />
             <sub>
                 <b>Aryan Moradi</b>
