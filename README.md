@@ -111,12 +111,47 @@ retrofitClient.Post<PostRequestModel, PostResponseModel>()
 
 
 
-### Backers
+### Contributor
 
-<a href="https://github.com/Aryan-mor" target="_blank">
-	<img src="https://avatars1.githubusercontent.com/u/22844436?s=460&v=4">
-</a>
-<a href="https://github.com/mojirzg" target="_blank">
-	<img src="https://avatars3.githubusercontent.com/u/29694641?s=460&v=4">
-</a>
+<table>
+  <tr>
+    <td align="center">
+        <a href="https://github.com/Aryan-mor">
+            <img src="https://avatars1.githubusercontent.com/u/22844436?s=460&v=4" width="100px;" alt="Aryan Moradi" style="border-radius: 100%;"/>
+            <br />
+            <br />
+            <sub>
+                <b>Aryan Moradi</b>
+            </sub>
+            </a>
+     </td>
+    <td align="center">
+        <a href="https://github.com/mojirzg">
+            <img src="https://avatars3.githubusercontent.com/u/29694641?s=460&v=4" width="100px;" alt="Aryan Moradi" style="border-radius: 100%;"/>
+            <br />
+            <br />
+            <sub>
+                <b>Aryan Moradi</b>
+            </sub>
+            </a>
+     </td>
+  </tr>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
