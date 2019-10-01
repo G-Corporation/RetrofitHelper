@@ -126,10 +126,10 @@ retrofitClient.Post<PostRequestModel, PostResponseModel>()
      </td>
     <td align="center">
         <a href="https://github.com/mojirzg">
-            <img src="https://avatars3.githubusercontent.com/u/29694641?s=460&v=4" width="100px;" alt="Aryan Moradi" style="max-width:100%;border-radius: 100%;"/>
+            <img src="https://avatars3.githubusercontent.com/u/29694641?s=460&v=4" width="100px;" alt="Mojtaba Razaghi" style="max-width:100%;border-radius: 100%;"/>
             <br />
             <sub>
-                <b>Aryan Moradi</b>
+                <b>Mojtaba Razaghi</b>
             </sub>
             </a>
      </td>
